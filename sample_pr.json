@@ -1,0 +1,11 @@
+{
+  "number": 42,
+  "repo": "ironclad-alpha/new-project",
+  "base": "main",
+  "head": "feature/auth",
+  "title": "Add user authentication",
+  "description": "Implements JWT-based auth with refresh tokens",
+  "files": ["auth.py", "models.py", "config.py"],
+  "diff": "diff --git a/auth.py b/auth.py\nnew file mode 100644\n@@ -0,0 +1,45 @@\n+import jwt\n+import os\n+from datetime import datetime, timedelta\n+\n+SECRET = os.getenv('JWT_SECRET', 'changeme')\n+\n+\n+def create_token(user_id: int) -> str:\n+    payload = {\n+        'sub': user_id,\n+        'exp': datetime.utcnow() + timedelta(hours=24),\n+        'iat': datetime.utcnow()\n+    }\n+    return jwt.encode(payload, SECRET, algorithm='HS256')\n+\n+\n+def verify_token(token: str) -> dict:\n+    try:\n+        return jwt.decode(token, SECRET, algorithms=['HS256'])\n+    except jwt.ExpiredSignatureError:\n+        raise ValueError('Token expired')\n+    except jwt.InvalidTokenError:\n+        raise ValueError('Invalid token')\n+\n+\n+def refresh_token(token: str) -> str:\n+    payload = verify_token(token)\n+    return create_token(payload['sub'])\n\ndiff --git a/models.py b/models.py\nnew file mode 100644\n@@ -0,0 +1,18 @@\n+from dataclasses import dataclass\n+from typing import Optional\n+from datetime import datetime\n+\n+\n+@dataclass\n+class User:\n+    id: int\n+    email: str\n+    password_hash: str\n+    created_at: datetime\n+    last_login: Optional[datetime] = None\n+    is_active: bool = True\n+\n+\n+@dataclass
++class RefreshToken:\n+    token: str\n+    user_id: int\n+    expires_at: datetime\n+    revoked: bool = False\n\ndiff --git a/config.py b/config.py\nnew file mode 100644\n@@ -0,0 +1,16 @@\n+import os\n+from dataclasses import dataclass\n+\n+\n+@dataclass\n+class Config:\n+    jwt_secret: str = os.getenv(\"JWT_SECRET\", \"dev-secret-change-in-prod\")\n+    jwt_algorithm: str = \"HS256\"\n+    access_token_ttl: int = 3600\n+    refresh_token_ttl: int = 604800\n+    db_url: str = os.getenv(\"DATABASE_URL\", \"sqlite:///app.db\")\n+\n+\n+config = Config()"
+}
