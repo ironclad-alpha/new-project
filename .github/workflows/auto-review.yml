@@ -1,0 +1,55 @@
+name: Auto PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false && github.event.pull_request.merged == false && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install dependencies
+        run: |
+          pip install groq requests
+      
+      - name: Get PR details
+        id: pr
+        run: |
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "REPO=${{ github.repository }}" >> $GITHUB_OUTPUT
+      
+      - name: Run auto reviewer
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.PR_NUMBER }}
+          GITHUB_REPOSITORY: ${{ steps.pr.outputs.REPO }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PR_REVIEW_MODEL: qwen/qwen3-32b
+        run: |
+          python -m pr_reviewer.github_integration
+      
+      - name: Cache review state
+        uses: actions/cache@v4
+        with:
+          path: .pr_review_cache
+          key: pr-review-${{ github.repository }}-${{ steps.pr.outputs.PR_NUMBER }}
+          restore-keys: |
+            pr-review-${{ github.repository }}-
