@@ -228,9 +228,9 @@ Output JSON array of comments:
 
 Empty array if nothing worth saying."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile"):
+    def __init__(self, api_key: Optional[str] = None, model: str = None):
         self.api_key = api_key or os.getenv("GROQ_API_KEY")
-        self.model = model
+        self.model = model or os.getenv("PR_REVIEW_MODEL", "qwen/qwen3-32b")
         self.client = Groq(api_key=self.api_key) if Groq and self.api_key else None
     
     def _detect_language(self, file_path: str) -> str:
