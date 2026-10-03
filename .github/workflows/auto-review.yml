@@ -42,7 +42,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ steps.pr.outputs.REPO }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          PR_REVIEW_MODEL: qwen/qwen3-32b
+          PR_REVIEW_MODEL: qwen/qwen3.8-27b
         run: |
           python -m pr_reviewer.github_integration
       

@@ -4,7 +4,8 @@ import requests
 from typing import Optional
 from dataclasses import dataclass
 
-from .core import PRReviewer, PRContext, ReviewComment, create_pr_context_from_github
+from .core import PRContext, ReviewComment, create_pr_context_from_github
+from .agentic import OrchestratorAgent
 
 
 @dataclass
@@ -132,7 +133,7 @@ class GitHubPRClient:
 class AutoReviewer:
     def __init__(self, github_token: str, repo: str, groq_api_key: Optional[str] = None):
         self.github = GitHubPRClient(GitHubConfig(github_token, repo))
-        self.reviewer = PRReviewer(groq_api_key)
+        self.reviewer = OrchestratorAgent(groq_api_key)
     
     def review_pr(self, pr_number: int) -> list[ReviewComment]:
         pr_data = self.github.get_pr(pr_number)
